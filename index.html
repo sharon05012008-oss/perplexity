@@ -1,0 +1,2747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Perplexity Explorer — Where AI Uncertainty Becomes Visible</title>
+
+  <!-- Modern AI Lab Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       DESIGN SYSTEM — DARK EMERALD AI LAB
+       ============================================================ */
+    :root {
+      --bg-main: #061B14;
+      --bg-secondary: #0A2119;
+      --bg-card: #0D2A20;
+      --bg-card-glass: rgba(13, 42, 32, 0.72);
+      --border: #1B4935;
+      --border-bright: rgba(0, 214, 154, 0.45);
+      --accent-primary: #B6FF6B;
+      --accent-secondary: #00D69A;
+      --text-main: #F1F5EF;
+      --text-muted: #91A99A;
+      --error: #FF6B6B;
+      --error-bg: rgba(255, 107, 107, 0.1);
+      --error-border: rgba(255, 107, 107, 0.45);
+
+      --font-display: "Space Grotesk", "Inter", system-ui, -apple-system, sans-serif;
+      --font-body: "Inter", system-ui, -apple-system, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --shadow-card: 0 20px 50px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(182, 255, 107, 0.07);
+      --glow-lime: 0 0 24px rgba(182, 255, 107, 0.32);
+      --glow-emerald: 0 0 24px rgba(0, 214, 154, 0.22);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      min-height: 100vh;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.6;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient laboratory grid and subtle emerald radial lighting */
+    .lab-backdrop {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .lab-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(27, 73, 53, 0.24) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(27, 73, 53, 0.24) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 85% 75% at 50% 25%, #000 35%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 25%, #000 35%, transparent 100%);
+    }
+
+    .lab-glow-1 {
+      position: absolute;
+      top: -180px;
+      left: -120px;
+      width: 680px;
+      height: 680px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 214, 154, 0.15) 0%, rgba(6, 27, 20, 0) 70%);
+      filter: blur(20px);
+    }
+
+    .lab-glow-2 {
+      position: absolute;
+      top: 22%;
+      right: -180px;
+      width: 620px;
+      height: 620px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(182, 255, 107, 0.09) 0%, rgba(6, 27, 20, 0) 70%);
+      filter: blur(24px);
+    }
+
+    .lab-glow-3 {
+      position: absolute;
+      bottom: -200px;
+      left: 30%;
+      width: 720px;
+      height: 520px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 214, 154, 0.1) 0%, rgba(6, 27, 20, 0) 70%);
+      filter: blur(28px);
+    }
+
+    .page-shell {
+      position: relative;
+      z-index: 1;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ============================================================
+       NAVIGATION BAR
+       ============================================================ */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(6, 27, 20, 0.8);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(27, 73, 53, 0.75);
+    }
+
+    .navbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      height: 72px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.96rem;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(182, 255, 107, 0.16), rgba(0, 214, 154, 0.12));
+      border: 1px solid rgba(182, 255, 107, 0.35);
+      box-shadow: 0 0 18px rgba(182, 255, 107, 0.15);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 9999px;
+      transition: color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent-primary);
+      background: rgba(182, 255, 107, 0.08);
+    }
+
+    .lab-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 13px;
+      border-radius: 9999px;
+      background: rgba(10, 33, 25, 0.9);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--accent-secondary);
+      white-space: nowrap;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-primary);
+      box-shadow: 0 0 10px var(--accent-primary);
+      animation: pulseGlow 2.2s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.8); }
+    }
+
+    /* ============================================================
+       BUTTON SYSTEM (PRIMARY, SECONDARY, SMALL ACTION)
+       ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      font-family: var(--font-body);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: transform 0.18s ease, box-shadow 0.22s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+      user-select: none;
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    /* Primary Button: Bright lime, dark green text, pill, soft glow */
+    .btn-primary {
+      background: var(--accent-primary);
+      color: var(--bg-main);
+      border-radius: 9999px;
+      padding: 13px 26px;
+      font-size: 0.95rem;
+      box-shadow: 0 0 26px rgba(182, 255, 107, 0.28), 0 6px 18px rgba(0, 0, 0, 0.25);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #c7ff8a;
+      transform: translateY(-1px);
+      box-shadow: 0 0 34px rgba(182, 255, 107, 0.45), 0 10px 22px rgba(0, 0, 0, 0.32);
+    }
+
+    /* Secondary Button: Transparent dark green, emerald border, lime text */
+    .btn-secondary {
+      background: rgba(10, 33, 25, 0.65);
+      color: var(--accent-primary);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      padding: 12px 22px;
+      font-size: 0.92rem;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(0, 214, 154, 0.12);
+      border-color: var(--accent-secondary);
+      transform: translateY(-1px);
+      box-shadow: 0 0 18px rgba(0, 214, 154, 0.18);
+    }
+
+    .btn-secondary.btn-compact {
+      padding: 8px 15px;
+      font-size: 0.83rem;
+      font-weight: 500;
+    }
+
+    /* Small Action Button: Minimal icon, rounded corners, subtle hover */
+    .btn-action {
+      background: rgba(6, 27, 20, 0.65);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.15s ease;
+    }
+
+    .btn-action:hover:not(:disabled) {
+      color: var(--accent-primary);
+      border-color: var(--accent-secondary);
+      background: rgba(0, 214, 154, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .btn-action.btn-danger:hover:not(:disabled) {
+      color: var(--error);
+      border-color: var(--error-border);
+      background: var(--error-bg);
+    }
+
+    /* ============================================================
+       HERO SECTION
+       ============================================================ */
+    .hero {
+      padding: 72px 0 64px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      gap: 48px;
+      align-items: center;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(13, 42, 32, 0.85);
+      border: 1px solid var(--border);
+      color: var(--accent-primary);
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 4.8vw, 3.85rem);
+      font-weight: 700;
+      line-height: 1.07;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+      color: var(--text-main);
+    }
+
+    .hero h1 .highlight {
+      background: linear-gradient(95deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero-desc {
+      font-size: 1.08rem;
+      color: var(--text-muted);
+      max-width: 540px;
+      margin-bottom: 32px;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    /* Decorative Hero Token Visualization Panel */
+    .hero-viz-card {
+      position: relative;
+      background: linear-gradient(160deg, rgba(13, 42, 32, 0.86), rgba(6, 27, 20, 0.92));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 26px;
+      box-shadow: var(--shadow-card), 0 0 60px rgba(0, 214, 154, 0.08);
+      overflow: hidden;
+    }
+
+    .hero-viz-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(182, 255, 107, 0.65), rgba(0, 214, 154, 0.55), transparent);
+    }
+
+    .viz-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      gap: 12px;
+    }
+
+    .viz-title {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .viz-pill {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      background: rgba(0, 214, 154, 0.1);
+      border: 1px solid rgba(0, 214, 154, 0.3);
+      color: var(--accent-secondary);
+    }
+
+    .token-flow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin: 12px 0 26px;
+    }
+
+    .hero-token-node {
+      flex: 1;
+      min-width: 0;
+      background: rgba(6, 27, 20, 0.85);
+      border: 1px solid rgba(27, 73, 53, 0.95);
+      border-radius: 14px;
+      padding: 16px 12px;
+      text-align: center;
+      position: relative;
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      animation: floatCard 5s ease-in-out infinite;
+    }
+
+    .hero-token-node:nth-child(3) {
+      animation-delay: 0.7s;
+      border-color: rgba(0, 214, 154, 0.5);
+      box-shadow: 0 0 24px rgba(0, 214, 154, 0.14);
+    }
+
+    .hero-token-node:nth-child(5) {
+      animation-delay: 1.4s;
+      border-color: rgba(182, 255, 107, 0.45);
+      box-shadow: 0 0 26px rgba(182, 255, 107, 0.14);
+    }
+
+    .hero-token-node:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 28px rgba(182, 255, 107, 0.22);
+    }
+
+    @keyframes floatCard {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .hero-token-step {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .hero-token-word {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 10px;
+    }
+
+    .hero-token-node:nth-child(5) .hero-token-word {
+      color: var(--accent-primary);
+    }
+
+    .hero-token-prob {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 9999px;
+      background: rgba(182, 255, 107, 0.1);
+      color: var(--accent-primary);
+      border: 1px solid rgba(182, 255, 107, 0.24);
+      margin-bottom: 10px;
+    }
+
+    .hero-mini-bar {
+      height: 5px;
+      width: 100%;
+      background: rgba(27, 73, 53, 0.65);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .hero-mini-bar span {
+      display: block;
+      height: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary));
+      box-shadow: 0 0 10px rgba(182, 255, 107, 0.55);
+    }
+
+    .flow-connector {
+      width: 38px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .flow-connector svg {
+      width: 38px;
+      height: 24px;
+      overflow: visible;
+    }
+
+    .flow-line-animated {
+      stroke-dasharray: 5 5;
+      animation: dashFlow 1.6s linear infinite;
+    }
+
+    @keyframes dashFlow {
+      to { stroke-dashoffset: -20; }
+    }
+
+    .viz-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(27, 73, 53, 0.75);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .viz-footer strong {
+      color: var(--accent-primary);
+      font-size: 0.92rem;
+    }
+
+    /* ============================================================
+       SECTIONS & GLASS CARDS
+       ============================================================ */
+    .section {
+      padding: 40px 0;
+      scroll-margin-top: 88px;
+    }
+
+    .section-header {
+      margin-bottom: 24px;
+    }
+
+    .section-title-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent-primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::before {
+      content: "";
+      width: 24px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary));
+      border-radius: 9999px;
+      box-shadow: 0 0 10px var(--accent-primary);
+    }
+
+    .section-subtitle {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 680px;
+    }
+
+    .sim-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      background: rgba(182, 255, 107, 0.1);
+      border: 1px solid rgba(182, 255, 107, 0.4);
+      color: var(--accent-primary);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .glass-card {
+      background: var(--bg-card-glass);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: var(--shadow-card);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 214, 154, 0.5), rgba(182, 255, 107, 0.35), transparent);
+      pointer-events: none;
+    }
+
+    .simulator-card {
+      background: linear-gradient(180deg, rgba(13, 42, 32, 0.8), rgba(10, 33, 25, 0.82));
+      border-color: rgba(0, 214, 154, 0.32);
+    }
+
+    /* ============================================================
+       SECTION 1 — INPUT & MODEL CONTROLS
+       ============================================================ */
+    .input-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .input-label {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+    }
+
+    .model-chip {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent-secondary);
+      background: rgba(6, 27, 20, 0.8);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 9999px;
+    }
+
+    .textarea-wrap {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .sentence-input {
+      width: 100%;
+      min-height: 108px;
+      resize: vertical;
+      background: rgba(6, 27, 20, 0.85);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px 48px 16px 18px;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 1.08rem;
+      line-height: 1.55;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .sentence-input:focus {
+      border-color: var(--accent-secondary);
+      box-shadow: 0 0 0 3px rgba(0, 214, 154, 0.14);
+    }
+
+    .sentence-input::placeholder {
+      color: rgba(145, 169, 154, 0.5);
+    }
+
+    .clear-input-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+    }
+
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .samples-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .samples-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-right: 4px;
+    }
+
+    /* Status & Animated Loader */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 13px 16px;
+      border-radius: var(--radius-sm);
+      background: rgba(6, 27, 20, 0.78);
+      border: 1px solid rgba(27, 73, 53, 0.85);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .status-indicator {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: background-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .status-bar.is-ready .status-dot {
+      background: var(--accent-primary);
+      box-shadow: 0 0 12px var(--accent-primary);
+    }
+
+    .status-bar.is-error .status-dot {
+      background: var(--error);
+      box-shadow: 0 0 12px var(--error);
+    }
+
+    .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(182, 255, 107, 0.2);
+      border-top-color: var(--accent-primary);
+      border-right-color: var(--accent-secondary);
+      animation: spin 0.75s linear infinite;
+    }
+
+    .status-bar.is-loading .status-dot {
+      display: none;
+    }
+
+    .status-bar.is-loading .spinner {
+      display: block;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status-text {
+      color: var(--text-main);
+    }
+
+    .status-meta {
+      font-size: 0.75rem;
+      color: var(--accent-secondary);
+      white-space: nowrap;
+    }
+
+    .download-progress-wrap {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .download-progress-wrap.visible {
+      display: block;
+    }
+
+    .download-progress-track {
+      height: 6px;
+      width: 100%;
+      border-radius: 9999px;
+      background: rgba(27, 73, 53, 0.65);
+      overflow: hidden;
+    }
+
+    .download-progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary));
+      box-shadow: 0 0 12px rgba(182, 255, 107, 0.5);
+      transition: width 0.22s ease;
+    }
+
+    .error-banner {
+      display: none;
+      margin-top: 14px;
+      padding: 13px 16px;
+      border-radius: var(--radius-sm);
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error);
+      font-size: 0.9rem;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .error-banner.visible {
+      display: flex;
+    }
+
+    /* ============================================================
+       EMPTY / WAITING STATES (NO SIMULATED MODEL DATA)
+       ============================================================ */
+    .empty-state {
+      text-align: center;
+      padding: 44px 20px;
+      border: 1px dashed rgba(27, 73, 53, 0.95);
+      border-radius: var(--radius-md);
+      background: rgba(6, 27, 20, 0.45);
+    }
+
+    .empty-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 14px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: rgba(0, 214, 154, 0.08);
+      border: 1px solid var(--border);
+      color: var(--accent-secondary);
+    }
+
+    .empty-state h3 {
+      font-family: var(--font-display);
+      font-size: 1.08rem;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .empty-state p {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      max-width: 460px;
+      margin: 0 auto;
+    }
+
+    /* ============================================================
+       SECTION 2 — PROBABILITY BREAKDOWN TABLE & STEP CARDS
+       ============================================================ */
+    .hidden {
+      display: none !important;
+    }
+
+    .token-strip {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      background: rgba(6, 27, 20, 0.72);
+      border: 1px solid rgba(27, 73, 53, 0.75);
+    }
+
+    .token-strip-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-right: 4px;
+    }
+
+    .token-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: rgba(13, 42, 32, 0.95);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+      color: var(--text-main);
+    }
+
+    .token-chip.bos-chip {
+      border-style: dashed;
+      color: var(--accent-secondary);
+      opacity: 0.85;
+    }
+
+    .space-glyph {
+      color: var(--accent-secondary);
+      opacity: 0.85;
+    }
+
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: rgba(6, 27, 20, 0.65);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      min-width: 560px;
+    }
+
+    .data-table th {
+      padding: 13px 16px;
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      background: rgba(10, 33, 25, 0.92);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(27, 73, 53, 0.55);
+      vertical-align: middle;
+      font-size: 0.94rem;
+    }
+
+    .data-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tbody tr {
+      transition: background-color 0.16s ease;
+    }
+
+    .data-table tbody tr:hover {
+      background: rgba(0, 214, 154, 0.05);
+    }
+
+    .col-idx {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      width: 56px;
+    }
+
+    .token-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: 8px;
+      background: rgba(13, 42, 32, 0.95);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: pre;
+    }
+
+    .token-id-tag {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-left: 8px;
+    }
+
+    .prob-cell {
+      min-width: 220px;
+    }
+
+    .prob-meta {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.86rem;
+      margin-bottom: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .prob-pct {
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+
+    .prob-dec {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 8px;
+      border-radius: 9999px;
+      background: rgba(27, 73, 53, 0.55);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary));
+      box-shadow: 0 0 12px rgba(0, 214, 154, 0.4);
+      transition: width 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .inv-cell {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-main);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    /* Calculation Step Cards */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .step-card {
+      background: rgba(6, 27, 20, 0.78);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .step-card:hover {
+      border-color: rgba(0, 214, 154, 0.45);
+    }
+
+    .step-card.step-final {
+      background: linear-gradient(155deg, rgba(182, 255, 107, 0.11) 0%, rgba(13, 42, 32, 0.92) 55%, rgba(6, 27, 20, 0.96) 100%);
+      border-color: rgba(182, 255, 107, 0.45);
+      box-shadow: 0 0 34px rgba(182, 255, 107, 0.12);
+    }
+
+    .step-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-secondary);
+    }
+
+    .step-card.step-final .step-label {
+      color: var(--accent-primary);
+    }
+
+    .step-expr {
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+      line-height: 1.55;
+      color: var(--text-main);
+      word-break: break-word;
+      max-height: 92px;
+      overflow-y: auto;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(10, 33, 25, 0.75);
+      border: 1px solid rgba(27, 73, 53, 0.7);
+    }
+
+    .step-big-num {
+      font-family: var(--font-display);
+      font-size: clamp(1.9rem, 3vw, 2.4rem);
+      font-weight: 700;
+      color: var(--text-main);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+    }
+
+    .ppl-big-num {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 4.2vw, 3.35rem);
+      font-weight: 700;
+      color: var(--accent-primary);
+      text-shadow: 0 0 28px rgba(182, 255, 107, 0.42);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+    }
+
+    .ppl-pop {
+      animation: pplPop 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes pplPop {
+      0% { transform: scale(0.94); filter: brightness(1.3); }
+      55% { transform: scale(1.05); }
+      100% { transform: scale(1); filter: brightness(1); }
+    }
+
+    .step-note {
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       SECTION 3 — NEXT TOKEN PREDICTION
+       ============================================================ */
+    .pred-context-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      background: rgba(6, 27, 20, 0.75);
+      border: 1px solid rgba(27, 73, 53, 0.75);
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+    }
+
+    .pred-context-text {
+      color: var(--text-main);
+    }
+
+    .pred-cursor {
+      display: inline-block;
+      padding: 2px 9px;
+      margin-left: 6px;
+      border-radius: 6px;
+      background: rgba(182, 255, 107, 0.14);
+      border: 1px dashed rgba(182, 255, 107, 0.6);
+      color: var(--accent-primary);
+      font-weight: 700;
+    }
+
+    .pred-hint {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    .pred-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .pred-row {
+      display: grid;
+      grid-template-columns: 44px minmax(120px, 180px) minmax(0, 1fr) 86px;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      background: rgba(6, 27, 20, 0.72);
+      border: 1px solid rgba(27, 73, 53, 0.75);
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .pred-row:hover {
+      transform: translateX(3px);
+      border-color: var(--accent-secondary);
+      background: rgba(13, 42, 32, 0.9);
+    }
+
+    .pred-row.is-top {
+      background: linear-gradient(90deg, rgba(182, 255, 107, 0.12) 0%, rgba(13, 42, 32, 0.92) 60%, rgba(6, 27, 20, 0.88) 100%);
+      border-color: rgba(182, 255, 107, 0.55);
+      box-shadow: 0 0 26px rgba(182, 255, 107, 0.12);
+    }
+
+    .pred-row.is-top:hover {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 32px rgba(182, 255, 107, 0.22);
+    }
+
+    .pred-rank {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .pred-row.is-top .pred-rank {
+      color: var(--accent-primary);
+    }
+
+    .pred-token-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .pred-token-wrap .token-badge {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pred-row.is-top .token-badge {
+      border-color: rgba(182, 255, 107, 0.5);
+      color: var(--accent-primary);
+      background: rgba(182, 255, 107, 0.1);
+    }
+
+    .pred-top-tag {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 2px 7px;
+      border-radius: 9999px;
+      background: var(--accent-primary);
+      color: var(--bg-main);
+      white-space: nowrap;
+    }
+
+    .pred-bar-track {
+      height: 11px;
+      border-radius: 9999px;
+      background: rgba(27, 73, 53, 0.55);
+      overflow: hidden;
+    }
+
+    .pred-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, rgba(0, 214, 154, 0.7), var(--accent-secondary));
+      transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .pred-row.is-top .pred-bar-fill {
+      background: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary));
+      box-shadow: 0 0 16px rgba(182, 255, 107, 0.55);
+    }
+
+    .pred-pct {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-main);
+    }
+
+    .pred-row.is-top .pred-pct {
+      color: var(--accent-primary);
+    }
+
+    /* ============================================================
+       SECTION 4 — INTERACTIVE SIMULATOR
+       ============================================================ */
+    .sim-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .sim-presets {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sim-input {
+      width: 100%;
+      background: rgba(6, 27, 20, 0.88);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 11px;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .sim-input:focus {
+      border-color: var(--accent-secondary);
+      box-shadow: 0 0 0 3px rgba(0, 214, 154, 0.14);
+    }
+
+    .sim-input.is-invalid {
+      border-color: var(--error);
+      background: rgba(255, 107, 107, 0.1);
+      color: var(--error);
+    }
+
+    .sim-prob-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 190px;
+    }
+
+    .sim-prob-wrap .sim-input {
+      width: 96px;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .sim-mini-bar {
+      flex: 1;
+      height: 7px;
+      border-radius: 9999px;
+      background: rgba(27, 73, 53, 0.55);
+      overflow: hidden;
+      min-width: 60px;
+    }
+
+    .sim-mini-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary));
+      transition: width 0.2s ease;
+    }
+
+    .sim-footer-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .sim-formula-bar {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .sim-formula-bar code {
+      color: var(--accent-secondary);
+    }
+
+    /* ============================================================
+       FOOTER
+       ============================================================ */
+    .footer {
+      margin-top: 64px;
+      padding: 34px 0 44px;
+      border-top: 1px solid rgba(27, 73, 53, 0.75);
+      background: rgba(6, 27, 20, 0.65);
+    }
+
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .footer-copy {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      color: var(--accent-secondary);
+    }
+
+    /* ============================================================
+       RESPONSIVE DESIGN (TABLET & MOBILE)
+       ============================================================ */
+    @media (max-width: 920px) {
+      .hero {
+        padding: 48px 0 40px;
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+
+      .steps-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .container {
+        padding: 0 16px;
+      }
+
+      .navbar-inner {
+        height: auto;
+        padding: 12px 0;
+        flex-wrap: wrap;
+      }
+
+      .nav-links {
+        order: 3;
+        width: 100%;
+        justify-content: flex-start;
+        gap: 4px;
+        padding-top: 6px;
+        border-top: 1px solid rgba(27, 73, 53, 0.55);
+      }
+
+      .glass-card {
+        padding: 20px 16px;
+      }
+
+      .token-flow {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .hero-token-node {
+        width: 100%;
+      }
+
+      .flow-connector {
+        transform: rotate(90deg);
+        height: 26px;
+      }
+
+      .pred-row {
+        grid-template-columns: 32px minmax(0, 1fr) 72px;
+        gap: 10px;
+      }
+
+      .pred-bar-track {
+        grid-column: 1 / -1;
+      }
+
+      .status-bar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Ambient Background Layers -->
+  <div class="lab-backdrop" aria-hidden="true">
+    <div class="lab-grid"></div>
+    <div class="lab-glow-1"></div>
+    <div class="lab-glow-2"></div>
+    <div class="lab-glow-3"></div>
+  </div>
+
+  <div class="page-shell">
+    <!-- ============================================================
+         TOP NAVIGATION BAR
+         ============================================================ -->
+    <header class="navbar">
+      <div class="container navbar-inner">
+        <a href="#" class="brand" aria-label="Perplexity Explorer Home">
+          <span class="brand-icon" aria-hidden="true">
+            <!-- Minimal Geometric AI Prism Logo -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <polygon points="12,2 21,7 21,17 12,22 3,17 3,7" stroke="#B6FF6B" stroke-width="1.8" fill="rgba(0,214,154,0.12)" />
+              <circle cx="12" cy="12" r="3" fill="#B6FF6B" />
+              <line x1="12" y1="2" x2="12" y2="9" stroke="#00D69A" stroke-width="1.5" />
+              <line x1="21" y1="17" x2="14.6" y2="13.5" stroke="#00D69A" stroke-width="1.5" />
+              <line x1="3" y1="17" x2="9.4" y2="13.5" stroke="#00D69A" stroke-width="1.5" />
+            </svg>
+          </span>
+          <span>PERPLEXITY EXPLORER</span>
+        </a>
+
+        <nav aria-label="Primary Navigation">
+          <ul class="nav-links">
+            <li><a href="#explore">Explore</a></li>
+            <li><a href="#predictions">Predictions</a></li>
+            <li><a href="#simulator">Simulator</a></li>
+          </ul>
+        </nav>
+
+        <div class="lab-badge">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <span>INTERACTIVE AI LAB</span>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- ============================================================
+           HERO SECTION
+           ============================================================ -->
+      <section class="hero">
+        <div class="container hero-grid">
+          <div>
+            <div class="hero-eyebrow">
+              <span>DistilGPT-2 In-Browser</span>
+              <span>•</span>
+              <span>Live Token Logits</span>
+            </div>
+            <h1>
+              Understand How AI <span class="highlight">Predicts Words.</span>
+            </h1>
+            <p class="hero-desc">
+              Explore how language models assign probabilities to every token and transform uncertainty into one powerful number: Perplexity.
+            </p>
+            <div class="hero-actions">
+              <a href="#explore" class="btn btn-primary" id="heroExploreBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span>Explore the Model</span>
+              </a>
+              <a href="#simulator" class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="4" y1="21" x2="4" y2="14"></line>
+                  <line x1="4" y1="10" x2="4" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12" y2="3"></line>
+                  <line x1="20" y1="21" x2="20" y2="16"></line>
+                  <line x1="20" y1="12" x2="20" y2="3"></line>
+                  <line x1="1" y1="14" x2="7" y2="14"></line>
+                  <line x1="9" y1="8" x2="15" y2="8"></line>
+                  <line x1="17" y1="16" x2="23" y2="16"></line>
+                </svg>
+                <span>Try the Simulator</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Decorative Animated Token Flow Diagram -->
+          <div class="hero-viz-card" aria-label="Conceptual token probability diagram: I to love to Python">
+            <div class="viz-header">
+              <div class="viz-title">
+                <span class="pulse-dot" aria-hidden="true"></span>
+                <span>Token Probability Chain</span>
+              </div>
+              <span class="viz-pill">CONCEPT DIAGRAM</span>
+            </div>
+
+            <div class="token-flow">
+              <div class="hero-token-node">
+                <div class="hero-token-step">TOKEN 01</div>
+                <div class="hero-token-word">I</div>
+                <div class="hero-token-prob">P = 0.50</div>
+                <div class="hero-mini-bar"><span style="width: 50%"></span></div>
+              </div>
+
+              <div class="flow-connector" aria-hidden="true">
+                <svg viewBox="0 0 38 24" fill="none">
+                  <line x1="2" y1="12" x2="30" y2="12" stroke="#00D69A" stroke-width="2" class="flow-line-animated" />
+                  <polyline points="25,6 32,12 25,18" stroke="#B6FF6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+
+              <div class="hero-token-node">
+                <div class="hero-token-step">TOKEN 02</div>
+                <div class="hero-token-word">love</div>
+                <div class="hero-token-prob">P = 0.80</div>
+                <div class="hero-mini-bar"><span style="width: 80%"></span></div>
+              </div>
+
+              <div class="flow-connector" aria-hidden="true">
+                <svg viewBox="0 0 38 24" fill="none">
+                  <line x1="2" y1="12" x2="30" y2="12" stroke="#00D69A" stroke-width="2" class="flow-line-animated" />
+                  <polyline points="25,6 32,12 25,18" stroke="#B6FF6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+
+              <div class="hero-token-node">
+                <div class="hero-token-step">TOKEN 03</div>
+                <div class="hero-token-word">Python</div>
+                <div class="hero-token-prob">P = 0.20</div>
+                <div class="hero-mini-bar"><span style="width: 20%"></span></div>
+              </div>
+            </div>
+
+            <div class="viz-footer">
+              <span>Higher P → Lower Surprise</span>
+              <span>Example PPL ≈ <strong>2.321</strong></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           SECTION 1 — REAL MODEL EXPLORER
+           ============================================================ -->
+      <section class="section" id="explore">
+        <div class="container">
+          <div class="section-header">
+            <div class="section-title-row">
+              <h2 class="section-title">01 / REAL MODEL EXPLORER</h2>
+            </div>
+            <p class="section-subtitle">
+              Discover how DistilGPT-2 understands your sentence, one token at a time.
+            </p>
+          </div>
+
+          <div class="glass-card">
+            <div class="input-header">
+              <label class="input-label" for="sentenceInput">Input Sentence</label>
+              <span class="model-chip">Xenova/distilgpt2 · dtype: q8</span>
+            </div>
+
+            <div class="textarea-wrap">
+              <textarea
+                id="sentenceInput"
+                class="sentence-input"
+                rows="3"
+                placeholder="Type any English sentence to measure DistilGPT-2's perplexity..."
+              >I love Python</textarea>
+              <button
+                type="button"
+                class="btn-action clear-input-btn"
+                id="clearInputBtn"
+                title="Clear text"
+                aria-label="Clear text"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <div class="controls-row">
+              <div class="samples-group">
+                <span class="samples-label">Samples:</span>
+                <button type="button" class="btn btn-secondary btn-compact sample-btn" data-sample="I love Python">
+                  I love Python
+                </button>
+                <button type="button" class="btn btn-secondary btn-compact sample-btn" data-sample="Python love I">
+                  Python love I
+                </button>
+                <button type="button" class="btn btn-secondary btn-compact sample-btn" data-sample="The capital of France is Paris">
+                  The capital of France is Paris
+                </button>
+              </div>
+
+              <button type="button" class="btn btn-primary" id="calculateBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                </svg>
+                <span>Calculate Perplexity</span>
+              </button>
+            </div>
+
+            <!-- Live Model Status Bar -->
+            <div class="status-bar" id="statusBar" role="status" aria-live="polite">
+              <div class="status-left">
+                <div class="status-indicator" aria-hidden="true">
+                  <span class="status-dot"></span>
+                  <span class="spinner"></span>
+                </div>
+                <span class="status-text" id="statusText">Idle — click "Calculate Perplexity" to download and run DistilGPT-2.</span>
+              </div>
+              <span class="status-meta" id="statusMeta">Model not loaded yet</span>
+            </div>
+
+            <!-- Download Progress Bar (only shown during first-time model download) -->
+            <div class="download-progress-wrap" id="downloadProgressWrap">
+              <div class="download-progress-track">
+                <div class="download-progress-fill" id="downloadProgressFill"></div>
+              </div>
+            </div>
+
+            <!-- Red Error Banner (shown on any model or input error) -->
+            <div class="error-banner" id="modelErrorBanner" role="alert">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span id="modelErrorText"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           SECTION 2 — TOKEN PROBABILITY ANALYSIS
+           ============================================================ -->
+      <section class="section" id="breakdown">
+        <div class="container">
+          <div class="section-header">
+            <div class="section-title-row">
+              <h2 class="section-title">02 / PROBABILITY BREAKDOWN</h2>
+            </div>
+            <p class="section-subtitle">
+              Each token's real probability P from the preceding DistilGPT-2 logits, and how those values combine into Perplexity.
+            </p>
+          </div>
+
+          <div class="glass-card">
+            <!-- Waiting State (no fake numbers shown before model runs) -->
+            <div class="empty-state" id="breakdownEmpty">
+              <div class="empty-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                  <line x1="3" y1="9" x2="21" y2="9"></line>
+                  <line x1="9" y1="21" x2="9" y2="9"></line>
+                </svg>
+              </div>
+              <h3>Awaiting Real Model Run</h3>
+              <p>
+                Click <strong>Calculate Perplexity</strong> above to load DistilGPT-2 and inspect genuine token-by-token probabilities.
+              </p>
+            </div>
+
+            <!-- Real Model Breakdown Results -->
+            <div id="breakdownResults" class="hidden">
+              <div class="token-strip" id="modelTokenStrip" aria-label="Tokenized sequence"></div>
+
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Token</th>
+                      <th>Probability P</th>
+                      <th>1/P</th>
+                    </tr>
+                  </thead>
+                  <tbody id="breakdownTableBody"></tbody>
+                </table>
+              </div>
+
+              <!-- Three Step-by-Step Calculation Cards -->
+              <div class="steps-grid">
+                <div class="step-card">
+                  <div class="step-label">STEP 01 — MULTIPLY</div>
+                  <div class="step-expr" id="modelMultiplyExpr">—</div>
+                  <div class="step-note" id="modelMultiplyNote">Product of all reciprocal probabilities (1/P)</div>
+                </div>
+
+                <div class="step-card">
+                  <div class="step-label">STEP 02 — COUNT</div>
+                  <div class="step-big-num" id="modelCountNum">N = 0</div>
+                  <div class="step-note">N = Total number of tokens</div>
+                </div>
+
+                <div class="step-card step-final">
+                  <div class="step-label">STEP 03 — FINAL PERPLEXITY</div>
+                  <div class="ppl-big-num" id="modelFinalPpl">—</div>
+                  <div class="step-note">Perplexity = exp(average of -ln(P))</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           SECTION 3 — NEXT TOKEN PREDICTION
+           ============================================================ -->
+      <section class="section" id="predictions">
+        <div class="container">
+          <div class="section-header">
+            <div class="section-title-row">
+              <h2 class="section-title">03 / NEXT TOKEN PREDICTION</h2>
+            </div>
+            <p class="section-subtitle">
+              What word does the model think should come next?
+            </p>
+          </div>
+
+          <div class="glass-card">
+            <!-- Waiting State -->
+            <div class="empty-state" id="predictionsEmpty">
+              <div class="empty-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10"></line>
+                  <line x1="12" y1="20" x2="12" y2="4"></line>
+                  <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+              </div>
+              <h3>No Predictions Yet</h3>
+              <p>
+                Run the real model in Section 01 to extract the top 8 next-token probabilities from the final logit position.
+              </p>
+            </div>
+
+            <!-- Live Top-8 Predictions -->
+            <div id="predictionsResults" class="hidden">
+              <div class="pred-context-bar">
+                <div class="pred-context-text">
+                  <span>Context:</span>
+                  <span id="predContextPreview"></span>
+                  <span class="pred-cursor">NEXT ?</span>
+                </div>
+                <span class="pred-hint">Click any predicted token to append it &amp; recalculate</span>
+              </div>
+
+              <div class="pred-list" id="predList"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           SECTION 4 — PERPLEXITY SIMULATOR (MANUAL SANDBOX)
+           ============================================================ -->
+      <section class="section" id="simulator">
+        <div class="container">
+          <div class="section-header">
+            <div class="section-title-row">
+              <h2 class="section-title">04 / PERPLEXITY SIMULATOR</h2>
+              <span class="sim-badge">SIMULATED — NOT FROM THE MODEL</span>
+            </div>
+            <p class="section-subtitle">
+              Take control of the probabilities and discover how uncertainty changes.
+            </p>
+          </div>
+
+          <div class="glass-card simulator-card">
+            <div class="sim-toolbar">
+              <div class="sim-presets">
+                <span class="samples-label">Presets:</span>
+                <button type="button" class="btn btn-secondary btn-compact" id="presetLoveBtn">
+                  I love Python
+                </button>
+                <button type="button" class="btn btn-secondary btn-compact" id="presetEightBtn">
+                  All 1/8
+                </button>
+                <button type="button" class="btn btn-secondary btn-compact" id="presetSurpriseBtn">
+                  One Surprising Word
+                </button>
+              </div>
+
+              <button type="button" class="btn btn-secondary btn-compact" id="addTokenBtn">
+                + Add Token
+              </button>
+            </div>
+
+            <!-- Interactive Editable Calculation Table -->
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Token</th>
+                    <th>Probability P (0 &lt; P ≤ 1)</th>
+                    <th>1/P</th>
+                    <th>-ln(P)</th>
+                    <th style="width: 64px; text-align: center;">Remove</th>
+                  </tr>
+                </thead>
+                <tbody id="simTableBody"></tbody>
+              </table>
+            </div>
+
+            <div class="sim-footer-bar">
+              <div class="sim-formula-bar">
+                Formula: <code>PPL = exp((-ln(P₁) - ln(P₂) - ... - ln(Pₙ)) / N)</code>
+              </div>
+            </div>
+
+            <!-- Simulator Validation Error -->
+            <div class="error-banner" id="simErrorBanner" role="alert">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span id="simErrorText"></span>
+            </div>
+
+            <!-- Simulator Live Calculation Cards -->
+            <div class="steps-grid">
+              <div class="step-card">
+                <div class="step-label">STEP 01 — MULTIPLY</div>
+                <div class="step-expr" id="simMultiplyExpr">—</div>
+                <div class="step-note" id="simMultiplyNote">Product of all reciprocal probabilities (1/P)</div>
+              </div>
+
+              <div class="step-card">
+                <div class="step-label">STEP 02 — COUNT</div>
+                <div class="step-big-num" id="simCountNum">N = 0</div>
+                <div class="step-note">N = Total number of tokens</div>
+              </div>
+
+              <div class="step-card step-final">
+                <div class="step-label">STEP 03 — SIMULATED PERPLEXITY</div>
+                <div class="ppl-big-num" id="simFinalPpl">—</div>
+                <div class="step-note">PPL = exp(average of -ln(P))</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============================================================
+         MINIMAL FOOTER
+         ============================================================ -->
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>Built to make AI probabilities easier to understand.</span>
+        <span class="footer-copy">PERPLEXITY EXPLORER © 2026</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ============================================================
+       JAVASCRIPT — TRANSFORMERS.JS REAL MODEL + INTERACTIVE SIMULATOR
+       ============================================================ -->
+  <script type="module">
+    import { AutoTokenizer, AutoModelForCausalLM, Tensor } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3";
+
+    // Model configuration
+    const MODEL_ID = "Xenova/distilgpt2";
+    const BOS_TOKEN_ID = 50256; // GPT-2 <|endoftext|> token prepended before real tokens
+
+    // Lazy-loaded model instances (stay null until first Calculate click)
+    let tokenizer = null;
+    let model = null;
+    let isBusy = false;
+
+    // ------------------------------------------------------------
+    // DOM References — Real Model Explorer (Sections 1, 2, 3)
+    // ------------------------------------------------------------
+    const sentenceInput = document.getElementById("sentenceInput");
+    const clearInputBtn = document.getElementById("clearInputBtn");
+    const calculateBtn = document.getElementById("calculateBtn");
+    const sampleButtons = document.querySelectorAll(".sample-btn");
+    const heroExploreBtn = document.getElementById("heroExploreBtn");
+
+    const statusBar = document.getElementById("statusBar");
+    const statusText = document.getElementById("statusText");
+    const statusMeta = document.getElementById("statusMeta");
+    const downloadProgressWrap = document.getElementById("downloadProgressWrap");
+    const downloadProgressFill = document.getElementById("downloadProgressFill");
+    const modelErrorBanner = document.getElementById("modelErrorBanner");
+    const modelErrorText = document.getElementById("modelErrorText");
+
+    const breakdownEmpty = document.getElementById("breakdownEmpty");
+    const breakdownResults = document.getElementById("breakdownResults");
+    const modelTokenStrip = document.getElementById("modelTokenStrip");
+    const breakdownTableBody = document.getElementById("breakdownTableBody");
+    const modelMultiplyExpr = document.getElementById("modelMultiplyExpr");
+    const modelMultiplyNote = document.getElementById("modelMultiplyNote");
+    const modelCountNum = document.getElementById("modelCountNum");
+    const modelFinalPpl = document.getElementById("modelFinalPpl");
+
+    const predictionsEmpty = document.getElementById("predictionsEmpty");
+    const predictionsResults = document.getElementById("predictionsResults");
+    const predContextPreview = document.getElementById("predContextPreview");
+    const predList = document.getElementById("predList");
+
+    // ------------------------------------------------------------
+    // Formatting & Math Helpers
+    // ------------------------------------------------------------
+
+    // Escape HTML safely before rendering tokens
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    // Format a decoded token so spaces appear clearly as "␣"
+    function formatTokenHtml(rawToken) {
+      const escaped = escapeHtml(rawToken);
+      return escaped
+        .replace(/ /g, '<span class="space-glyph">␣</span>')
+        .replace(/\n/g, '<span class="space-glyph">↵</span>')
+        .replace(/\t/g, '<span class="space-glyph">⇥</span>');
+    }
+
+    // Format a probability cleanly without hiding tiny non-zero numbers
+    function formatProbability(p) {
+      if (p >= 0.0001) return p.toFixed(4);
+      if (p > 0) return p.toExponential(2);
+      return "0.0000";
+    }
+
+    // Format a percentage cleanly
+    function formatPercent(p) {
+      const pct = p * 100;
+      if (pct >= 0.01) return `${pct.toFixed(2)}%`;
+      if (pct > 0) return `${pct.toExponential(2)}%`;
+      return "0.00%";
+    }
+
+    // Format reciprocal values (1/P) and large products cleanly
+    function formatReciprocal(val) {
+      if (!Number.isFinite(val)) return "∞";
+      if (val >= 1e6) return val.toExponential(2);
+      if (val >= 100) return val.toFixed(1);
+      return val.toFixed(2);
+    }
+
+    // Build multiplication expression and total product from reciprocal values
+    function buildMultiplicationSummary(reciprocals, totalLogInv) {
+      const terms = reciprocals.map((r) => formatReciprocal(r));
+      const exprPrefix = terms.join(" × ");
+
+      // Use log-space sum to avoid Infinity overflow on very long sentences
+      const product = Math.exp(totalLogInv);
+      let productText;
+      if (Number.isFinite(product) && product < 1e9) {
+        productText = product >= 1000
+          ? product.toLocaleString("en-US", { maximumFractionDigits: 2 })
+          : product.toFixed(2);
+      } else {
+        // Compute scientific notation safely using base-10 log
+        const log10Val = totalLogInv / Math.LN10;
+        const exponent = Math.floor(log10Val);
+        const mantissa = Math.pow(10, log10Val - exponent);
+        productText = `${mantissa.toFixed(2)}e+${exponent}`;
+      }
+
+      return {
+        expression: `${exprPrefix} = ${productText}`,
+        productText
+      };
+    }
+
+    // Numerically stable softmax statistics for one position in logits [1, n, vocab]
+    function computePositionSoftmaxStats(logitsData, offset, vocabSize) {
+      // Step 1: Find the maximum logit to prevent Math.exp() overflow
+      let maxLogit = -Infinity;
+      for (let v = 0; v < vocabSize; v++) {
+        const val = logitsData[offset + v];
+        if (val > maxLogit) maxLogit = val;
+      }
+
+      // Step 2: Sum exp(logit - maxLogit) across the entire vocabulary
+      let sumExp = 0;
+      for (let v = 0; v < vocabSize; v++) {
+        sumExp += Math.exp(logitsData[offset + v] - maxLogit);
+      }
+
+      return {
+        maxLogit,
+        sumExp,
+        logSumExp: maxLogit + Math.log(sumExp)
+      };
+    }
+
+    // Extract top-K indices and logits in a single O(vocabSize) pass
+    function extractTopKLogits(logitsData, offset, vocabSize, k = 8) {
+      const top = [];
+      for (let v = 0; v < vocabSize; v++) {
+        const logit = logitsData[offset + v];
+        if (top.length < k || logit > top[top.length - 1].logit) {
+          top.push({ id: v, logit });
+          top.sort((a, b) => b.logit - a.logit);
+          if (top.length > k) top.pop();
+        }
+      }
+      return top;
+    }
+
+    // Trigger subtle scale/glow animation on a perplexity number
+    function animateNumber(el) {
+      el.classList.remove("ppl-pop");
+      void el.offsetWidth; // Force reflow so animation restarts
+      el.classList.add("ppl-pop");
+    }
+
+    // ------------------------------------------------------------
+    // UI Status & Error Helpers
+    // ------------------------------------------------------------
+    function setStatus(state, message, meta = "") {
+      statusBar.classList.remove("is-loading", "is-ready", "is-error");
+      if (state === "loading") statusBar.classList.add("is-loading");
+      if (state === "ready") statusBar.classList.add("is-ready");
+      if (state === "error") statusBar.classList.add("is-error");
+      statusText.textContent = message;
+      if (meta !== undefined) statusMeta.textContent = meta;
+    }
+
+    function showModelError(message) {
+      modelErrorText.textContent = message;
+      modelErrorBanner.classList.add("visible");
+      setStatus("error", "Calculation failed.", "Error");
+    }
+
+    function clearModelError() {
+      modelErrorText.textContent = "";
+      modelErrorBanner.classList.remove("visible");
+    }
+
+    function setControlsDisabled(disabled) {
+      calculateBtn.disabled = disabled;
+      sampleButtons.forEach((btn) => { btn.disabled = disabled; });
+    }
+
+    // ------------------------------------------------------------
+    // Lazy Model Loading (Only runs on first Calculate click)
+    // ------------------------------------------------------------
+    async function ensureModelLoaded() {
+      if (model && tokenizer) return;
+
+      const fileProgress = new Map();
+      downloadProgressWrap.classList.add("visible");
+      downloadProgressFill.style.width = "6%";
+
+      // 1. Download and initialize quantized DistilGPT-2 model
+      setStatus("loading", "Downloading the model...", "Xenova/distilgpt2 (q8)");
+
+      model = await AutoModelForCausalLM.from_pretrained(MODEL_ID, {
+        dtype: "q8",
+        progress_callback: (info) => {
+          if (info && info.file && typeof info.progress === "number") {
+            fileProgress.set(info.file, info.progress);
+            let sum = 0;
+            fileProgress.forEach((val) => { sum += val; });
+            const avg = Math.min(100, Math.round(sum / fileProgress.size));
+            downloadProgressFill.style.width = `${Math.max(6, avg)}%`;
+            statusMeta.textContent = `${avg}% downloaded`;
+          }
+        }
+      });
+
+      // 2. Load matching GPT-2 tokenizer
+      setStatus("loading", "Loading tokenizer...", "Preparing vocabulary");
+      downloadProgressFill.style.width = "100%";
+      tokenizer = await AutoTokenizer.from_pretrained(MODEL_ID);
+
+      // 3. Model ready
+      downloadProgressWrap.classList.remove("visible");
+      setStatus("ready", "Model ready.", "DistilGPT-2 loaded");
+    }
+
+    // ------------------------------------------------------------
+    // Core Real-Model Inference & Perplexity Calculation
+    // ------------------------------------------------------------
+    async function runRealModelCalculation() {
+      if (isBusy) return;
+
+      const text = sentenceInput.value;
+      clearModelError();
+
+      if (!text || text.trim().length === 0) {
+        showModelError("Please enter a sentence before calculating perplexity.");
+        return;
+      }
+
+      isBusy = true;
+      setControlsDisabled(true);
+
+      try {
+        // Load model lazily on first click
+        await ensureModelLoaded();
+
+        setStatus("loading", "Calculating probabilities...", "Running forward pass");
+        // Yield one frame so the status message paints smoothly before inference
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+
+        const startTime = performance.now();
+
+        // 1. Tokenize sentence without extra special tokens
+        const rawEncoded = tokenizer.encode(text, { add_special_tokens: false });
+        const encodedIds = Array.from(rawEncoded, (id) => Number(id));
+
+        if (!encodedIds.length) {
+          throw new Error("The tokenizer produced zero tokens for this input.");
+        }
+
+        // 2. Prepend BOS token ID 50256 before the encoded tokens
+        const allIds = [BOS_TOKEN_ID, ...encodedIds];
+        const seqLen = allIds.length;
+
+        // 3. Build int64 input tensors and run DistilGPT-2 once on all IDs
+        const inputIdsTensor = new Tensor(
+          "int64",
+          BigInt64Array.from(allIds, (id) => BigInt(id)),
+          [1, seqLen]
+        );
+        const attentionMaskTensor = new Tensor(
+          "int64",
+          BigInt64Array.from(allIds, () => 1n),
+          [1, seqLen]
+        );
+
+        const outputs = await model({
+          input_ids: inputIdsTensor,
+          attention_mask: attentionMaskTensor
+        });
+
+        // 4. Validate logits tensor dimensions: expected [1, n, vocabulary]
+        const logits = outputs && outputs.logits;
+        if (!logits || !logits.dims || logits.dims.length !== 3) {
+          throw new Error("Unexpected logits tensor shape returned by the model.");
+        }
+
+        const [batchSize, timeSteps, vocabSize] = logits.dims;
+        if (batchSize !== 1 || timeSteps !== seqLen || vocabSize < 1) {
+          throw new Error(`Invalid logits dimensions [${logits.dims.join(", ")}] for sequence length ${seqLen}.`);
+        }
+
+        const logitsData = logits.data;
+
+        // 5. Compute probability for each real token from its preceding position
+        const tokenResults = [];
+        let sumNegLogP = 0;
+
+        for (let i = 0; i < encodedIds.length; i++) {
+          const tokenId = encodedIds[i];
+          // Real token i sits at allIds[i + 1], so its preceding position is i
+          const precedingOffset = i * vocabSize;
+          const { logSumExp } = computePositionSoftmaxStats(logitsData, precedingOffset, vocabSize);
+
+          const tokenLogit = logitsData[precedingOffset + tokenId];
+          const logProb = tokenLogit - logSumExp;
+          const prob = Math.exp(logProb);
+          const negLogP = -logProb; // Identical to -ln(P), safe against underflow
+          const invP = Math.exp(negLogP); // Identical to 1/P
+
+          sumNegLogP += negLogP;
+
+          tokenResults.push({
+            index: i + 1,
+            id: tokenId,
+            text: tokenizer.decode([tokenId]),
+            prob,
+            invP,
+            negLogP
+          });
+        }
+
+        const nTokens = tokenResults.length;
+        const avgNegLogP = sumNegLogP / nTokens;
+        const perplexity = Math.exp(avgNegLogP);
+
+        // 6. Compute top-8 next-token predictions from the last logit position
+        const lastPosOffset = (seqLen - 1) * vocabSize;
+        const { maxLogit, sumExp } = computePositionSoftmaxStats(logitsData, lastPosOffset, vocabSize);
+        const topLogits = extractTopKLogits(logitsData, lastPosOffset, vocabSize, 8);
+
+        const topPredictions = topLogits.map((item, idx) => {
+          const prob = Math.exp(item.logit - maxLogit) / sumExp;
+          return {
+            rank: idx + 1,
+            id: item.id,
+            text: tokenizer.decode([item.id]),
+            prob,
+            percent: prob * 100
+          };
+        });
+
+        const elapsedMs = Math.round(performance.now() - startTime);
+
+        // 7. Render Section 2 and Section 3 with actual model outputs
+        renderModelBreakdown(tokenResults, sumNegLogP, perplexity);
+        renderNextTokenPredictions(text, topPredictions);
+
+        setStatus("ready", "Model ready.", `${nTokens} tokens · ${elapsedMs} ms`);
+      } catch (err) {
+        console.error("Perplexity Explorer model error:", err);
+        downloadProgressWrap.classList.remove("visible");
+        const detail = err && err.message ? err.message : String(err);
+        showModelError(`Could not run DistilGPT-2: ${detail}`);
+      } finally {
+        isBusy = false;
+        setControlsDisabled(false);
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Render Section 2 — Token Probability Breakdown
+    // ------------------------------------------------------------
+    function renderModelBreakdown(tokenResults, sumNegLogP, perplexity) {
+      breakdownEmpty.classList.add("hidden");
+      breakdownResults.classList.remove("hidden");
+
+      // Token strip showing BOS followed by each decoded token
+      const stripChips = [
+        '<span class="token-strip-label">Tokens:</span>',
+        '<span class="token-chip bos-chip" title="Prepended start token (ID 50256)">BOS · 50256</span>'
+      ];
+      tokenResults.forEach((tok) => {
+        stripChips.push(
+          `<span class="token-chip" title="Token ID ${tok.id}">${formatTokenHtml(tok.text)}</span>`
+        );
+      });
+      modelTokenStrip.innerHTML = stripChips.join("");
+
+      // Populate breakdown table rows
+      breakdownTableBody.innerHTML = tokenResults
+        .map((tok) => {
+          const barWidth = Math.max(1.5, Math.min(100, tok.prob * 100));
+          return `
+            <tr>
+              <td class="col-idx">${String(tok.index).padStart(2, "0")}</td>
+              <td>
+                <span class="token-badge">${formatTokenHtml(tok.text)}</span>
+                <span class="token-id-tag">#${tok.id}</span>
+              </td>
+              <td class="prob-cell">
+                <div class="prob-meta">
+                  <span class="prob-pct">${formatPercent(tok.prob)}</span>
+                  <span class="prob-dec">P = ${formatProbability(tok.prob)}</span>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" data-width="${barWidth.toFixed(2)}%"></div>
+                </div>
+              </td>
+              <td class="inv-cell">${formatReciprocal(tok.invP)}</td>
+            </tr>
+          `;
+        })
+        .join("");
+
+      // Animate probability bars cleanly on the next animation frame
+      requestAnimationFrame(() => {
+        breakdownTableBody.querySelectorAll(".bar-fill").forEach((bar) => {
+          bar.style.width = bar.dataset.width;
+        });
+      });
+
+      // Step 01: Multiplication expression
+      const reciprocals = tokenResults.map((t) => t.invP);
+      const multSummary = buildMultiplicationSummary(reciprocals, sumNegLogP);
+      modelMultiplyExpr.textContent = multSummary.expression;
+      modelMultiplyNote.textContent = `Product of ${tokenResults.length} reciprocal probabilities`;
+
+      // Step 02: Token count
+      modelCountNum.textContent = `N = ${tokenResults.length}`;
+
+      // Step 03: Final Perplexity (3 decimal places)
+      modelFinalPpl.textContent = Number.isFinite(perplexity) ? perplexity.toFixed(3) : "Overflow";
+      animateNumber(modelFinalPpl);
+    }
+
+    // ------------------------------------------------------------
+    // Render Section 3 — Top 8 Next-Token Predictions
+    // ------------------------------------------------------------
+    function renderNextTokenPredictions(contextText, predictions) {
+      predictionsEmpty.classList.add("hidden");
+      predictionsResults.classList.remove("hidden");
+
+      const displayContext = contextText.length > 72
+        ? `…${contextText.slice(-72)}`
+        : contextText;
+      predContextPreview.textContent = `"${displayContext}"`;
+
+      // Scale bar widths relative to the top prediction so relative gaps read clearly,
+      // while also reflecting true percentage scale
+      const maxPct = Math.max(predictions[0]?.percent || 1, 1);
+
+      predList.innerHTML = predictions
+        .map((pred) => {
+          const isTop = pred.rank === 1;
+          // Blend absolute and relative scaling so small probabilities remain legible
+          const visualWidth = Math.max(2, Math.min(100, (pred.percent / maxPct) * 100));
+          return `
+            <div
+              class="pred-row ${isTop ? "is-top" : ""}"
+              role="button"
+              tabindex="0"
+              data-token-text="${escapeHtml(pred.text)}"
+              title="Click to append this token to your sentence and recalculate"
+            >
+              <div class="pred-rank">#${pred.rank}</div>
+              <div class="pred-token-wrap">
+                <span class="token-badge">${formatTokenHtml(pred.text)}</span>
+                ${isTop ? '<span class="pred-top-tag">TOP</span>' : ""}
+              </div>
+              <div class="pred-bar-track">
+                <div class="pred-bar-fill" data-width="${visualWidth.toFixed(2)}%"></div>
+              </div>
+              <div class="pred-pct">${pred.percent.toFixed(2)}%</div>
+            </div>
+          `;
+        })
+        .join("");
+
+      // Animate horizontal bars
+      requestAnimationFrame(() => {
+        predList.querySelectorAll(".pred-bar-fill").forEach((bar) => {
+          bar.style.width = bar.dataset.width;
+        });
+      });
+
+      // Allow clicking a predicted token row to append it and recalculate
+      predList.querySelectorAll(".pred-row").forEach((row, index) => {
+        const appendAndRun = () => {
+          if (isBusy) return;
+          sentenceInput.value += predictions[index].text;
+          runRealModelCalculation();
+        };
+        row.addEventListener("click", appendAndRun);
+        row.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            appendAndRun();
+          }
+        });
+      });
+    }
+
+    // ------------------------------------------------------------
+    // Event Listeners — Section 1
+    // ------------------------------------------------------------
+    calculateBtn.addEventListener("click", () => {
+      runRealModelCalculation();
+    });
+
+    // Sample buttons populate the text box and automatically calculate
+    sampleButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        sentenceInput.value = btn.dataset.sample;
+        runRealModelCalculation();
+      });
+    });
+
+    clearInputBtn.addEventListener("click", () => {
+      sentenceInput.value = "";
+      sentenceInput.focus();
+      clearModelError();
+    });
+
+    // Cmd/Ctrl + Enter shortcut to calculate
+    sentenceInput.addEventListener("keydown", (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        runRealModelCalculation();
+      }
+    });
+
+    heroExploreBtn.addEventListener("click", () => {
+      setTimeout(() => sentenceInput.focus(), 450);
+    });
+
+    // ============================================================
+    // SECTION 4 — INTERACTIVE PERPLEXITY SIMULATOR (MANUAL ONLY)
+    // ============================================================
+    const simTableBody = document.getElementById("simTableBody");
+    const addTokenBtn = document.getElementById("addTokenBtn");
+    const presetLoveBtn = document.getElementById("presetLoveBtn");
+    const presetEightBtn = document.getElementById("presetEightBtn");
+    const presetSurpriseBtn = document.getElementById("presetSurpriseBtn");
+    const simErrorBanner = document.getElementById("simErrorBanner");
+    const simErrorText = document.getElementById("simErrorText");
+    const simMultiplyExpr = document.getElementById("simMultiplyExpr");
+    const simMultiplyNote = document.getElementById("simMultiplyNote");
+    const simCountNum = document.getElementById("simCountNum");
+    const simFinalPpl = document.getElementById("simFinalPpl");
+
+    // Simulator presets
+    const SIM_PRESETS = {
+      lovePython: [
+        { token: "I", prob: "0.5" },
+        { token: "love", prob: "0.8" },
+        { token: "Python", prob: "0.2" }
+      ],
+      allEight: [
+        { token: "token_1", prob: "0.125" },
+        { token: "token_2", prob: "0.125" },
+        { token: "token_3", prob: "0.125" },
+        { token: "token_4", prob: "0.125" },
+        { token: "token_5", prob: "0.125" },
+        { token: "token_6", prob: "0.125" },
+        { token: "token_7", prob: "0.125" },
+        { token: "token_8", prob: "0.125" }
+      ],
+      oneSurprising: [
+        { token: "The", prob: "0.9" },
+        { token: "sky", prob: "0.9" },
+        { token: "is", prob: "0.9" },
+        { token: "quantum", prob: "0.01" }
+      ]
+    };
+
+    // Simulator state: array of { token: string, prob: string }
+    let simRows = SIM_PRESETS.lovePython.map((r) => ({ ...r }));
+
+    function showSimError(message) {
+      simErrorText.textContent = message;
+      simErrorBanner.classList.add("visible");
+    }
+
+    function clearSimError() {
+      simErrorText.textContent = "";
+      simErrorBanner.classList.remove("visible");
+    }
+
+    // Parse and validate probability (must satisfy 0 < P <= 1)
+    function parseValidProbability(rawValue) {
+      const trimmed = String(rawValue).trim();
+      if (trimmed === "") return null;
+      const num = Number(trimmed);
+      if (!Number.isFinite(num) || num <= 0 || num > 1) return null;
+      return num;
+    }
+
+    // Render all simulator table rows
+    function renderSimulatorRows() {
+      simTableBody.innerHTML = "";
+
+      if (simRows.length === 0) {
+        const emptyRow = document.createElement("tr");
+        emptyRow.innerHTML = `
+          <td colspan="6" style="text-align:center; padding: 28px; color: var(--text-muted);">
+            No tokens yet. Click <strong>+ Add Token</strong> or choose a preset above.
+          </td>
+        `;
+        simTableBody.appendChild(emptyRow);
+        updateSimulatorCalculations(false);
+        return;
+      }
+
+      simRows.forEach((row, idx) => {
+        const tr = document.createElement("tr");
+        tr.dataset.rowIndex = String(idx);
+
+        tr.innerHTML = `
+          <td class="col-idx">${String(idx + 1).padStart(2, "0")}</td>
+          <td>
+            <input
+              type="text"
+              class="sim-input sim-token-input"
+              value="${escapeHtml(row.token)}"
+              aria-label="Token ${idx + 1} name"
+              placeholder="token"
+            />
+          </td>
+          <td>
+            <div class="sim-prob-wrap">
+              <input
+                type="number"
+                class="sim-input sim-prob-input"
+                value="${escapeHtml(row.prob)}"
+                step="0.01"
+                min="0.0001"
+                max="1"
+                aria-label="Token ${idx + 1} probability"
+                placeholder="0.5"
+              />
+              <div class="sim-mini-bar" aria-hidden="true">
+                <div class="sim-mini-bar-fill"></div>
+              </div>
+            </div>
+          </td>
+          <td class="inv-cell sim-inv-cell">—</td>
+          <td class="inv-cell sim-neglog-cell" style="color: var(--text-muted);">—</td>
+          <td style="text-align: center;">
+            <button
+              type="button"
+              class="btn-action btn-danger sim-remove-btn"
+              title="Remove token"
+              aria-label="Remove token ${idx + 1}"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </td>
+        `;
+
+        // Live edit listeners
+        const tokenInput = tr.querySelector(".sim-token-input");
+        const probInput = tr.querySelector(".sim-prob-input");
+        const removeBtn = tr.querySelector(".sim-remove-btn");
+
+        tokenInput.addEventListener("input", () => {
+          simRows[idx].token = tokenInput.value;
+          updateSimulatorCalculations(false);
+        });
+
+        probInput.addEventListener("input", () => {
+          simRows[idx].prob = probInput.value;
+          updateSimulatorCalculations(true);
+        });
+
+        removeBtn.addEventListener("click", () => {
+          simRows.splice(idx, 1);
+          renderSimulatorRows();
+        });
+
+        simTableBody.appendChild(tr);
+      });
+
+      updateSimulatorCalculations(true);
+    }
+
+    // Recalculate simulator metrics live without rebuilding inputs (preserves cursor focus)
+    function updateSimulatorCalculations(shouldAnimate) {
+      if (simRows.length === 0) {
+        clearSimError();
+        simMultiplyExpr.textContent = "—";
+        simMultiplyNote.textContent = "Add at least one token to calculate";
+        simCountNum.textContent = "N = 0";
+        simFinalPpl.textContent = "—";
+        return;
+      }
+
+      const rowElements = simTableBody.querySelectorAll("tr");
+      const reciprocals = [];
+      let sumNegLogP = 0;
+      let hasInvalid = false;
+
+      simRows.forEach((row, idx) => {
+        const tr = rowElements[idx];
+        const probInput = tr.querySelector(".sim-prob-input");
+        const barFill = tr.querySelector(".sim-mini-bar-fill");
+        const invCell = tr.querySelector(".sim-inv-cell");
+        const negLogCell = tr.querySelector(".sim-neglog-cell");
+
+        const p = parseValidProbability(row.prob);
+        if (p === null) {
+          hasInvalid = true;
+          probInput.classList.add("is-invalid");
+          barFill.style.width = "0%";
+          invCell.textContent = "—";
+          negLogCell.textContent = "—";
+        } else {
+          probInput.classList.remove("is-invalid");
+          const invP = 1 / p;
+          const negLogP = -Math.log(p);
+
+          reciprocals.push(invP);
+          sumNegLogP += negLogP;
+
+          barFill.style.width = `${Math.max(2, Math.min(100, p * 100))}%`;
+          invCell.textContent = formatReciprocal(invP);
+          negLogCell.textContent = negLogP.toFixed(3);
+        }
+      });
+
+      simCountNum.textContent = `N = ${simRows.length}`;
+
+      if (hasInvalid) {
+        showSimError("Every probability must be greater than 0 and less than or equal to 1 (0 < P ≤ 1).");
+        simMultiplyExpr.textContent = "Fix invalid probabilities above";
+        simMultiplyNote.textContent = "Waiting for valid probabilities";
+        simFinalPpl.textContent = "—";
+        return;
+      }
+
+      clearSimError();
+
+      // Step 01: Multiplication expression
+      const multSummary = buildMultiplicationSummary(reciprocals, sumNegLogP);
+      simMultiplyExpr.textContent = multSummary.expression;
+      simMultiplyNote.textContent = `Product of ${simRows.length} reciprocal probabilities`;
+
+      // Step 03: PPL = exp((-ln(P1) - ln(P2) - ... - ln(PN)) / N)
+      const ppl = Math.exp(sumNegLogP / simRows.length);
+      simFinalPpl.textContent = ppl.toFixed(3);
+
+      if (shouldAnimate) {
+        animateNumber(simFinalPpl);
+      }
+    }
+
+    // Simulator preset & add-token buttons
+    function loadPreset(presetKey) {
+      simRows = SIM_PRESETS[presetKey].map((r) => ({ ...r }));
+      renderSimulatorRows();
+    }
+
+    presetLoveBtn.addEventListener("click", () => loadPreset("lovePython"));
+    presetEightBtn.addEventListener("click", () => loadPreset("allEight"));
+    presetSurpriseBtn.addEventListener("click", () => loadPreset("oneSurprising"));
+
+    addTokenBtn.addEventListener("click", () => {
+      simRows.push({
+        token: `token_${simRows.length + 1}`,
+        prob: "0.5"
+      });
+      renderSimulatorRows();
+    });
+
+    // Initialize simulator with the "I love Python" preset on load
+    renderSimulatorRows();
+  </script>
+</body>
+</html>
